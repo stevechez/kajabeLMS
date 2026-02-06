@@ -1,57 +1,122 @@
-import { createClient } from "@/utils/supabase/server";
-import { redirect } from "next/navigation";
-import { CourseActions } from "./_components/course-actions";
-import { ModuleForm } from "./_components/module-form";
-import { LayoutDashboard, ListChecks } from "lucide-react";
+import { createClient } from '@/utils/supabase/server';
+import { redirect } from 'next/navigation';
+import { LayoutDashboard, ListChecks, CircleDollarSign } from 'lucide-react';
 
-export default async function CourseIdPage({ params }: { params: { courseId: string } }) {
-  const supabase = await createClient();
-  const { courseId } = await params;
+import { CourseActions } from './_components/course-actions';
+import { DescriptionForm } from './_components/description-form';
+import { PriceForm } from './_components/price-form';
+import { ImageForm } from './_components/image-form';
+import { ModuleForm } from './_components/module-form';
 
-  const { data: course } = await supabase
-    .from("courses")
-    .select(`*, modules(id, title, order_index)`)
-    .eq("id", courseId)
-    .single();
+interface CourseIdPageProps {
+	params: Promise<{ courseId: string }>;
+}
 
-  if (!course) return redirect("/dashboard");
+export default async function CourseIdPage({ params }: CourseIdPageProps) {
+	const supabase = await createClient();
 
-  const requiredFields = [course.title, course.description, course.modules.length > 0];
-  const completedFields = requiredFields.filter(Boolean).length;
-  const completionText = `(${completedFields}/${requiredFields.length})`;
+	// Await params to get courseId (Next.js 14/15 standard)
+	const { courseId } = await params;
 
-  return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-y-2">
-          <h1 className="text-2xl font-bold">Course setup</h1>
-          <span className="text-sm text-slate-700">Complete all fields {completionText}</span>
-        </div>
-        <CourseActions courseId={courseId} isPublished={course.is_published} />
-      </div>
+	// 1. Fetch course data and destructure as 'course'
+	const { data: course, error } = await supabase
+		.from('courses')
+		.select(
+			`
+      *,
+      modules (
+        id,
+        title,
+        order_index
+      )
+    `,
+		)
+		.eq('id', courseId)
+		.single();
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
-        <div>
-          <div className="flex items-center gap-x-2">
-            <div className="p-2 bg-blue-100 rounded-full"><LayoutDashboard className="text-blue-700" /></div>
-            <h2 className="text-xl">Customize your course</h2>
-          </div>
-          {/* Add TitleForm and DescriptionForm here later */}
-          <div className="p-4 bg-slate-50 border rounded-md mt-4">
-            <p className="font-bold">{course.title}</p>
-          </div>
-        </div>
+	// 2. Redirect if course doesn't exist or there's an error
+	if (!course || error) {
+		return redirect('/dashboard');
+	}
 
-        <div className="space-y-6">
-          <div>
-            <div className="flex items-center gap-x-2">
-              <div className="p-2 bg-blue-100 rounded-full"><ListChecks className="text-blue-700" /></div>
-              <h2 className="text-xl">Course curriculum</h2>
-            </div>
-            <ModuleForm courseId={courseId} initialModules={course.modules || []} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+	// 3. Logic for completion tracking (Kajabi style)
+	const requiredFields = [
+		course.title,
+		course.description,
+		course.thumbnail_url,
+		course.price !== null,
+		course.modules.length > 0,
+	];
+
+	const totalFields = requiredFields.length;
+	const completedFields = requiredFields.filter(Boolean).length;
+	const completionText = `(${completedFields}/${totalFields})`;
+	const isComplete = requiredFields.every(Boolean);
+
+	return (
+		<div className="p-6">
+			<div className="flex items-center justify-between">
+				<div className="flex flex-col gap-y-2">
+					<h1 className="text-2xl font-bold font-sans">Course setup</h1>
+					<span className="text-sm text-slate-700">
+						Complete all fields {completionText}
+					</span>
+				</div>
+				{/* Actions for publishing/deleting */}
+				<CourseActions courseId={courseId} isPublished={course.is_published} />
+			</div>
+
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
+				{/* LEFT COLUMN: Metadata */}
+				<div className="space-y-6">
+					<div>
+						<div className="flex items-center gap-x-2">
+							<div className="p-2 bg-blue-100 rounded-full">
+								<LayoutDashboard className="text-blue-700 w-5 h-5" />
+							</div>
+							<h2 className="text-xl font-semibold">Customize your course</h2>
+						</div>
+
+						{/* Title display (can be turned into a TitleForm later) */}
+						<div className="mt-6 border bg-slate-100 rounded-md p-4">
+							<div className="font-medium flex items-center justify-between">
+								Course title
+							</div>
+							<p className="text-sm mt-2 font-bold">{course.title}</p>
+						</div>
+
+						<ImageForm courseId={course.id} initialData={course} />
+
+						<DescriptionForm courseId={course.id} initialData={course} />
+					</div>
+				</div>
+
+				{/* RIGHT COLUMN: Curriculum & Pricing */}
+				<div className="space-y-6">
+					<div>
+						<div className="flex items-center gap-x-2">
+							<div className="p-2 bg-blue-100 rounded-full">
+								<ListChecks className="text-blue-700 w-5 h-5" />
+							</div>
+							<h2 className="text-xl font-semibold">Course curriculum</h2>
+						</div>
+						<ModuleForm
+							courseId={course.id}
+							initialModules={course.modules || []}
+						/>
+					</div>
+
+					<div>
+						<div className="flex items-center gap-x-2">
+							<div className="p-2 bg-blue-100 rounded-full">
+								<CircleDollarSign className="text-blue-700 w-5 h-5" />
+							</div>
+							<h2 className="text-xl font-semibold">Sell your course</h2>
+						</div>
+						<PriceForm courseId={course.id} initialData={course} />
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
