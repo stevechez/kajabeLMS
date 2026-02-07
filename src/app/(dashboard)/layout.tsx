@@ -1,20 +1,25 @@
-import { Sidebar } from "@/components/shared/sidebar";
-import { Navbar } from "@/components/shared/navbar";
+import './globals.css';
+import { Inter } from 'next/font/google';
+import { ConfettiProvider } from '@/components/providers/confetti-provider';
 
-export default function DashboardLayout({
-  children,
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata = {
+	title: 'Kajabi Clone',
+	description: 'Learning Management System',
+};
+
+export default function RootLayout({
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 flex flex-col overflow-y-auto">
-        <Navbar />
-        <div className="p-8">
-          {children}
-        </div>
-      </main>
-    </div>
-  );
+	return (
+		<html lang="en">
+			<body className={inter.className}>
+				<ConfettiProvider />
+				{children}
+			</body>
+		</html>
+	);
 }

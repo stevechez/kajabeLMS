@@ -1,36 +1,38 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { formatPrice } from '@/lib/format';
 import { CourseProgress } from '@/components/shared/course-progress';
 
 interface CourseCardProps {
 	id: string;
 	title: string;
-	thumbnailUrl: string | null;
-	lessonsCount: number;
-	price: number | null;
-	progress: number | null; // Added this
+	thumbnailUrl: string;
+	chaptersCount: number;
+	price: number;
+	progress: number | null;
+	category: string;
 }
 
 export const CourseCard = ({
-	id,
+	id, // Added missing prop
 	title,
-	thumbnailUrl,
-	lessonsCount,
+	thumbnailUrl, // Added missing prop
+	chaptersCount,
 	price,
 	progress,
+	category,
 }: CourseCardProps) => {
 	return (
 		<Link href={`/courses/${id}`}>
-			<Card className="group hover:shadow-sm transition overflow-hidden border p-3 h-full">
+			<div className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full bg-white">
 				{/* Thumbnail Section */}
 				<div className="relative w-full aspect-video rounded-md overflow-hidden">
 					<Image
 						fill
 						className="object-cover"
 						alt={title}
-						src={thumbnailUrl || '/placeholder-course.jpg'}
+						src={thumbnailUrl || '/placeholder.jpg'}
 					/>
 				</div>
 
@@ -39,17 +41,18 @@ export const CourseCard = ({
 					<div className="text-lg md:text-base font-medium group-hover:text-blue-700 transition line-clamp-2">
 						{title}
 					</div>
+					<p className="text-xs text-muted-foreground mt-1">{category}</p>
 
 					<div className="my-3 flex items-center gap-x-2 text-sm md:text-xs">
 						<div className="flex items-center gap-x-1 text-slate-500">
-							<BookOpen className="w-4 h-4" />
+							<BookOpen className="h-4 w-4 text-blue-600" />
 							<span>
-								{lessonsCount} {lessonsCount === 1 ? 'Lesson' : 'Lessons'}
+								{chaptersCount} {chaptersCount === 1 ? 'Chapter' : 'Chapters'}
 							</span>
 						</div>
 					</div>
 
-					{/* Logic: Show Progress bar if it exists, otherwise show Price */}
+					{/* Progress or Price Logic */}
 					{progress !== null ? (
 						<CourseProgress
 							variant={progress === 100 ? 'success' : 'default'}
@@ -58,11 +61,11 @@ export const CourseCard = ({
 						/>
 					) : (
 						<p className="text-md md:text-sm font-medium text-slate-700">
-							{price !== null ? `$${price.toLocaleString()}` : 'Free'}
+							{formatPrice(price)}
 						</p>
 					)}
 				</div>
-			</Card>
+			</div>
 		</Link>
 	);
 };

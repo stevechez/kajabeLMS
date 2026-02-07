@@ -36,10 +36,22 @@ export interface UserProgress {
 	is_completed: boolean;
 }
 
-// 2. The Extended Type used in Browse and Dashboard
-export interface CourseWithFullData extends Course {
-	modules: (Module & {
-		lessons: Lesson[];
-	})[];
-	progress?: number | null; // Added to support the Dashboard view
+export interface CourseWithFullData {
+	id: string;
+	title: string;
+	thumbnail_url: string | null;
+	price: number | null;
+	is_published: boolean;
+	category: { name: string } | null;
+	modules: {
+		id: string;
+		lessons: {
+			id: string;
+			title: string; // Add this
+			is_free: boolean; // Add this
+			user_progress: {
+				is_completed: boolean;
+			}[];
+		}[];
+	}[];
 }
